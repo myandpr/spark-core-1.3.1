@@ -362,7 +362,7 @@
         <testOutputDirectory>target/scala-${scala.binary.version}/test-classes</testOutputDirectory>
         <plugins>
             <!-- Unzip py4j so we can include its files in the jar -->
-            <plugin>
+            <!--<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
@@ -378,8 +378,8 @@
                         <unzip src="../python/lib/py4j-0.8.2.1-src.zip" dest="../python/build"/>
                     </target>
                 </configuration>
-            </plugin>
-            <plugin>
+            </plugin>-->
+            <!--<plugin>
                 <artifactId>maven-clean-plugin</artifactId>
                 <configuration>
                     <filesets>
@@ -389,7 +389,7 @@
                     </filesets>
                     <verbose>true</verbose>
                 </configuration>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -423,18 +423,18 @@
             <resource>
                 <directory>src/main/resources</directory>
             </resource>
-            <resource>
+            <!--<resource>
                 <directory>../python</directory>
                 <includes>
                     <include>pyspark/*.py</include>
                 </includes>
-            </resource>
-            <resource>
+            </resource>-->
+            <!--<resource>
                 <directory>../python/build</directory>
                 <includes>
                     <include>py4j/*.py</include>
                 </includes>
-            </resource>
+            </resource>-->
         </resources>
     </build>
 
