@@ -62,6 +62,7 @@ private[spark] class HttpFileServer(
         serverUri + "/jars/" + file.getName
     }
 
+    //  HttpFileServer的addFile函数真正发生copy行为的地方，不仅仅是把file和jar文件路径添加，而且还将数据复制到了启动httpFileServer服务的目录中。
     def addFileToDir(file: File, dir: File): String = {
         // Check whether the file is a directory. If it is, throw a more meaningful exception.
         // If we don't catch this, Guava throws a very confusing error message:
