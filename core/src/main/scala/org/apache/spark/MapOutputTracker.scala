@@ -41,8 +41,8 @@ private[spark] case class GetMapOutputStatuses(shuffleId: Int)
 private[spark] case object StopMapOutputTracker extends MapOutputTrackerMessage
 
 /** Actor class for MapOutputTrackerMaster */
-// 在该文件中没有任何class引用，是独立存在的一个基于MapOutputTrackerMaster构成的actor，在SparkEnv中new出赋值给该文件的MapOutputTracker的tracker变量
-//  该变量tracker存在于driver(MapOutputTrackerMaster)和executor(MapOutputTrackerWorker)端,保存着driver端的actor
+// 在该文件中没有任何class引用，是独立存在的一个基于MapOutputTrackerMaster构成的actor，在SparkEnv中new出赋值给该文件的MapOutputTracker的trackerActor变量
+//  该变量trackerActor存在于driver(MapOutputTrackerMaster)和executor(MapOutputTrackerWorker)端,保存着driver端的actor
 //  MapOutputTrackerMasterActor本来就是和MapOutputTrackerMaster一致的，不存在MapOutputTrackerWorkerActor
 //  所以该actor才是核心，至于TrackerMaster和TrackerWorker都是管理变量的，用来供actor调用的。
 private[spark] class MapOutputTrackerMasterActor(tracker: MapOutputTrackerMaster, conf: SparkConf)

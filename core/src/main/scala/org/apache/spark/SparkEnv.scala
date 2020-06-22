@@ -306,6 +306,7 @@ object SparkEnv extends Logging {
         *
         * 根据SparkContext创建SparkEnv时传入isDriver参数，选择创建对应的MapOutputTrackerMaster或MapOutputTrackerWorker
         * 管理shuffle的结果存储管理
+        * 不论是MapOutputTrackerMaster还是MapOutputTrackerWorker，都包含他们的父类MapOutputTracker的TrackerActor变量，也就是MapOutputTrackerMasterActor
         * */
         val mapOutputTracker = if (isDriver) {
             new MapOutputTrackerMaster(conf)
@@ -318,6 +319,9 @@ object SparkEnv extends Logging {
         /*
         *
         * registerOrLookup函数返回了actor，是driver的actor，not executor的actor
+        * 这里的name="MapOutputTracker"就是代表MapOutputTrackerMasterActor
+        *
+        * 不论是Driver端还是Executor端的trackerActor,都是MapOutputTrackerMasterActor，不存在MapOutputTrackerWorkerActor
         * */
         mapOutputTracker.trackerActor = registerOrLookup(
             "MapOutputTracker",
