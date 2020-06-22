@@ -66,6 +66,7 @@ class BlockManagerMaster(
     }
 
     /** Get locations of the blockId from the driver */
+        //  从driver获取某个blockId的位置（因为一个block可能存在多个BlockManager中）
     def getLocations(blockId: BlockId): Seq[BlockManagerId] = {
         askDriverWithReply[Seq[BlockManagerId]](GetLocations(blockId))
     }
@@ -88,6 +89,7 @@ class BlockManagerMaster(
         askDriverWithReply[Seq[BlockManagerId]](GetPeers(blockManagerId))
     }
 
+    //  获取executorID对应的actorSystem：由executorID获得BlockManagerID，再获取BlockManagerInfo，最后获得actorSystem
     def getActorSystemHostPortForExecutor(executorId: String): Option[(String, Int)] = {
         askDriverWithReply[Option[(String, Int)]](GetActorSystemHostPortForExecutor(executorId))
     }
@@ -95,6 +97,9 @@ class BlockManagerMaster(
     /**
       * Remove a block from the slaves that have it. This can only be used to remove
       * blocks that the driver knows about.
+      * 向自身参数BlockManagerMasterActor发送RemoveBlock消息，BlockManagerMasterActor收到后查询自身保存的block相关信息，
+      * 获取有该block的所有blockManager，然后向各个BlockManager的slaveActor发送RemoveBlock消息
+      * 以下几个函数都需要从BlockManagerMasterActor查到各个executor对应的BlockManager，然后给他们的SlaveActor发送消息进行操作
       */
     def removeBlock(blockId: BlockId) {
         askDriverWithReply(RemoveBlock(blockId))
@@ -113,6 +118,9 @@ class BlockManagerMaster(
     }
 
     /** Remove all blocks belonging to the given shuffle. */
+        //就是找到shuffleId对应的MapOutputTracker的mapStatus中删除该ShuffleId信息，
+        // 其实是通过BlockManagerMasterActor的BlockManagerInfo变量向所有BlockManager的slaveActor发送RemoveShuffle消息，
+        //  然后每个BlockManager收到后，删除自身MapOutputTracker的mapStatuses变量中key为ShuffleId的数据
     def removeShuffle(shuffleId: Int, blocking: Boolean) {
         val future = askDriverWithReply[Future[Seq[Boolean]]](RemoveShuffle(shuffleId))
         future.onFailure {

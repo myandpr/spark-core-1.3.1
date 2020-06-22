@@ -295,6 +295,7 @@ object SparkEnv extends Logging {
                 logInfo("Registering " + name)
                 /*
                 * 注册并返回actor
+                * 这里的actorSystem是根据isDriver的值是不同的，else中的actorSystem是executor端的actorSystem
                 * */
                 actorSystem.actorOf(Props(newActor), name = name)
             } else {
@@ -367,7 +368,9 @@ object SparkEnv extends Logging {
             }
 
         /*
-        * 创建BlockManagerMaster这个actor
+        * 创建BlockManagerMaster
+        * 主要根据isDriver参数是否为true去决定是生成Driver端的actor还是查找到Driver端的actor
+        * BlockManagerMasterActor构成了BlockManagerMaster，BlockManagerMaster又构成了BlockManager
         * */
         val blockManagerMaster = new BlockManagerMaster(registerOrLookup(
             "BlockManagerMaster",
@@ -376,6 +379,8 @@ object SparkEnv extends Logging {
         // NB: blockManager is not valid until initialize() is called later.
         /*
         * 用到actorSystem、BlockManagerMaster（这是个actor）、mapOutputTracker、shuffleManager、blockTransferService、securityManager参数，创建BlockManager，
+        *
+        * 和MapOutputTracker差不多，都是不论是Driver端还是executor端，都保存Driver端的actor，也就是BlockManagerMasterActor
         * */
         val blockManager = new BlockManager(executorId, actorSystem, blockManagerMaster,
             serializer, conf, mapOutputTracker, shuffleManager, blockTransferService, securityManager,
