@@ -76,6 +76,7 @@ private[spark] class MapOutputTrackerMasterActor(tracker: MapOutputTrackerMaster
   * a stage. This is abstract because different versions of MapOutputTracker
   * (driver and executor) use different HashMap to store its metadata.
   */
+//  跟踪所有stage的map output位置，之所以MapOutputTracker是abstract，因为driver端和executor端存储location of the map output of a stage的实现方式不一样
 private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging {
     private val timeout = AkkaUtils.askTimeout(conf)
     private val retryAttempts = AkkaUtils.numRetries(conf)
@@ -87,6 +88,8 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
     *
     * 看不到该trackerActor是如何设置的？？为什么只有使用，没有设置？？？
     *
+    * 该actor是driver端的MapOutputTrackerActor
+    * 设置在SparkEnv中create函数（createDriverEnv/createExecutorEnv的实现函数）中对其赋值
     *
     * 该变量是public，意味着可以在外部的类中，对其设置。。。。。。。。。
     * */
@@ -102,6 +105,7 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
       * Note: because mapStatuses is accessed concurrently, subclasses should make sure it's a
       * thread-safe map.
       */
+        //  driver端保存ShuffleMapTask的map outputs记录；executor端仅仅保存缓存,如果未命中则从driver端的mapStatuses拉取。
     protected val mapStatuses: Map[Int, Array[MapStatus]]
 
     /**
@@ -140,6 +144,8 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
     /**
       * Called from executors to get the server URIs and output sizes of the map outputs of
       * a given shuffle.
+      *
+      * executor调用该函数获取server端保存的shuffleid对应的map output信息
       */
     def getServerStatuses(shuffleId: Int, reduceId: Int): Array[(BlockManagerId, Long)] = {
         val statuses = mapStatuses.get(shuffleId).orNull
@@ -158,6 +164,8 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
 
                 // Either while we waited the fetch happened successfully, or
                 // someone fetched it in between the get and the fetching.synchronized.
+                //  fetchedStatus表示该executor的某个task正在拉取的mapStatus，如果某个task拉完了，那么该executor的mapStatuses就有了
+                //  等了半天其他executor拉取，发现fetchedStatus为空，证明没有拉取成功，需要我们自己fetch
                 fetchedStatuses = mapStatuses.get(shuffleId).orNull
                 if (fetchedStatuses == null) {
                     // We have to do the fetch, get others to wait for us.
@@ -174,6 +182,7 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
                         askTracker(GetMapOutputStatuses(shuffleId)).asInstanceOf[Array[Byte]]
                     fetchedStatuses = MapOutputTracker.deserializeMapStatuses(fetchedBytes)
                     logInfo("Got the output locations")
+                    //  该executor中如果某个task拉完了，那么该executor的mapStatuses就有了
                     mapStatuses.put(shuffleId, fetchedStatuses)
                 } finally {
                     fetching.synchronized {

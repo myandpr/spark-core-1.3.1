@@ -424,7 +424,7 @@ private[spark] object SparkConf extends Logging {
       * Holds information about keys that have been deprecated or renamed.
       *
       * @param oldName            Old configuration key.
-      * @param newName            New configuration key, or `null` if key has no replacement, in which case the
+      * @param _newName            New configuration key, or `null` if key has no replacement, in which case the
       *                           deprecated key will be used (but the warning message will still be printed).
       * @param version            Version of Spark where key was deprecated.
       * @param deprecationMessage Message to include in the deprecation warning; mandatory when
