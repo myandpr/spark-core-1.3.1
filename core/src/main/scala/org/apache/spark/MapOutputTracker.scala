@@ -41,6 +41,10 @@ private[spark] case class GetMapOutputStatuses(shuffleId: Int)
 private[spark] case object StopMapOutputTracker extends MapOutputTrackerMessage
 
 /** Actor class for MapOutputTrackerMaster */
+// 在该文件中没有任何class引用，是独立存在的一个基于MapOutputTrackerMaster构成的actor，在SparkEnv中new出赋值给该文件的MapOutputTracker的tracker变量
+//  该变量tracker存在于driver(MapOutputTrackerMaster)和executor(MapOutputTrackerWorker)端,保存着driver端的actor
+//  MapOutputTrackerMasterActor本来就是和MapOutputTrackerMaster一致的，不存在MapOutputTrackerWorkerActor
+//  所以该actor才是核心，至于TrackerMaster和TrackerWorker都是管理变量的，用来供actor调用的。
 private[spark] class MapOutputTrackerMasterActor(tracker: MapOutputTrackerMaster, conf: SparkConf)
         extends Actor with ActorLogReceive with Logging {
     val maxAkkaFrameSize = AkkaUtils.maxFrameSizeBytes(conf)
@@ -372,6 +376,7 @@ private[spark] object MapOutputTracker extends Logging {
     // Serialize an array of map output locations into an efficient byte format so that we can send
     // it to reduce tasks. We do this by compressing the serialized bytes using GZIP. They will
     // generally be pretty compressible because many map outputs will be on the same hostname.
+    //  压缩并序列化为byte字节格式
     def serializeMapStatuses(statuses: Array[MapStatus]): Array[Byte] = {
         val out = new ByteArrayOutputStream
         val objOut = new ObjectOutputStream(new GZIPOutputStream(out))
@@ -384,6 +389,7 @@ private[spark] object MapOutputTracker extends Logging {
     }
 
     // Opposite of serializeMapStatuses.
+    //  反序列化
     def deserializeMapStatuses(bytes: Array[Byte]): Array[MapStatus] = {
         val objIn = new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(bytes)))
         objIn.readObject().asInstanceOf[Array[MapStatus]]
