@@ -26,6 +26,10 @@ import org.apache.spark.{Logging, SparkConf, SparkException}
 import org.apache.spark.storage.BlockManagerMessages._
 import org.apache.spark.util.AkkaUtils
 
+//  参数driverActor保存的是BlockManagerMasterActor
+/***********************************************************************************************************************/
+//  BlockManagerMaster是通过向BlockManagerMasterActor发消息，操作BlockManagerMasterActor保存的重要hashMap去管理各个BlockManager
+/***********************************************************************************************************************/
 private[spark]
 class BlockManagerMaster(
                                 var driverActor: ActorRef,

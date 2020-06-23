@@ -40,14 +40,19 @@ import org.apache.spark.util.{ActorLogReceive, AkkaUtils, Utils}
 private[spark]
 class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus: LiveListenerBus)
         extends Actor with ActorLogReceive with Logging {
+    //这是BlockManagerMasterActor的核心，所有函数都围绕这几个变量查询、操作的
 
     // Mapping from block manager id to the block manager's information.
+    // 保存所有BlockManager信息，最重要的是BlockManagerInfo保存有各自的SlaveActor
+    //  BlockManagerId:BlockManagerInfo = 1:1
     private val blockManagerInfo = new mutable.HashMap[BlockManagerId, BlockManagerInfo]
 
     // Mapping from executor ID to block manager ID.
+    //  executorId:BlockManagerId = 1:1
     private val blockManagerIdByExecutor = new mutable.HashMap[String, BlockManagerId]
 
     // Mapping from block id to the set of block managers that have the block.
+    //  blockId:BlockManagerId(executerId) = 1:N
     private val blockLocations = new JHashMap[BlockId, mutable.HashSet[BlockManagerId]]
 
     private val akkaTimeout = AkkaUtils.askTimeout(conf)
@@ -159,6 +164,8 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
 
     private def removeShuffle(shuffleId: Int): Future[Seq[Boolean]] = {
         // Nothing to do in the BlockManagerMasterActor data structures
+        //  向所有BlockManagerInfo保存的所有BlockManager的Actor（BlockManagerSlaveActor，都在各个BlockManager中保存自己的BlockManagerSlaveActor）发送消息，
+        //  收到后，进行操作。此处直接调用MapOutputTracker删除mapStatuses变量的ShuffleId部分
         import context.dispatcher
         val removeMsg = RemoveShuffle(shuffleId)
         Future.sequence(
@@ -461,6 +468,7 @@ private[spark] class BlockManagerInfo(
     private var _remainingMem: Long = maxMem
 
     // Mapping from block id to its status.
+    //保存每个BlockManager管理的Block块的信息
     private val _blocks = new JHashMap[BlockId, BlockStatus]
 
     def getStatus(blockId: BlockId) = Option(_blocks.get(blockId))
